@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #1a1a1a;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #gameBoard {
+            display: flex;
+            gap: 20px;
+            margin: 50px 0;
+        }
+
+        .card {
+            width: 200px;
+            height: 300px;
+            background: #2c3e50;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+            font-family: Arial, sans-serif;
+        }
+
+        .gua {
+            font-size: 40px;
+            color: #FFD700;
+            text-align: center;
+        }
+
+        .name {
+            position: absolute;
+            font-size: 32px;
+            color: white;
+            display: none;
+        }
+
+        #startBtn {
+            padding: 15px 30px;
+            font-size: 24px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        #fireworks {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <button id="startBtn">开始卜卦</button>
+    <div id="gameBoard"></div>
+    <div id="fireworks"></div>
+
+    <script>
+        const names = ["吕行家", "吕鹿鸣", "李金妍", "李金珠"];
+        const guaList = [
+            { symbol: "☰", name: "乾" },
+            { symbol: "☷", name: "坤" },
+            { symbol: "☳", name: "震" },
+            { symbol: "☴", name: "巽" },
+            { symbol: "☵", name: "坎" },
+            { symbol: "☶", name: "艮" },
+            { symbol: "☲", name: "离" },
+            { symbol: "☱", name: "兑" }
+        ];
+
+        let activeCards = 0;
+        let currentNames = [];
+        let fireworksTimeout;
+
+        function createCard() {
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            const guaDiv = document.createElement('div');
+            guaDiv.className = 'gua';
+            
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'name';
+            
+            card.appendChild(guaDiv);
+            card.appendChild(nameDiv);
+            
+            card.onclick = function() {
+                if (!card.classList.contains('active')) {
+                    const randomName = names[Math.floor(Math.random() * names.length)];
+                    nameDiv.textContent = randomName;
+                    currentNames[Array.from(card.parentNode.children).indexOf(card)] = randomName;
+                    
+                    guaDiv.style.display = 'none';
+                    nameDiv.style.display = 'block';
+                    card.classList.add('active');
+                    activeCards++;
+                    
+                    setTimeout(() => {
+                        guaDiv.style.display = 'block';
+                        nameDiv.style.display = 'none';
+                        card.classList.remove('active');
+                        activeCards--;
+                        currentNames[Array.from(card.parentNode.children).indexOf(card)] = null;
+                    }, 15000);
+
+                    checkWin();
+                }
+            };
+            return card;
+        }
+
+        function checkWin() {
+            if (activeCards === 3 && currentNames.every(n => n === currentNames[0])) {
+                showFireworks();
+            }
+        }
+
+        function showFireworks() {
+            const fireworks = document.getElementById('fireworks');
+            fireworks.style.display = 'block';
+            
+            // 简单烟花效果
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff'];
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.style.cssText = `
+                    position: absolute;
+                    width: 10px;
+                    height: 10px;
+                    background: ${colors[Math.floor(Math.random() * colors.length)]};
+                    border-radius: 50%;
+                    left: ${Math.random() * 100}%;
+                    top: ${Math.random() * 100}%;
+                    animation: explode 1s ease-out;
+                `;
+                
+                fireworks.appendChild(particle);
+            }
+
+            clearTimeout(fireworksTimeout);
+            fireworksTimeout = setTimeout(() => {
+                fireworks.style.display = 'none';
+                fireworks.innerHTML = '';
+            }, 3000);
+        }
+
+        document.getElementById('startBtn').onclick = function() {
+            const board = document.getElementById('gameBoard');
+            board.innerHTML = '';
+            currentNames = [];
+            activeCards = 0;
+            
+            // 随机选择3个不同的卦
+            const shuffledGua = [...guaList].sort(() => 0.5 - Math.random()).slice(0, 3);
+            
+            for (let i = 0; i < 3; i++) {
+                const card = createCard();
+                card.querySelector('.gua').innerHTML = 
+                    `${shuffledGua[i].symbol}<br>${shuffledGua[i].name}`;
+                board.appendChild(card);
+            }
+        };
+
+        // 添加烟花动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes explode {
+                0% { transform: scale(1); opacity: 1; }
+                100% { transform: scale(3); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
